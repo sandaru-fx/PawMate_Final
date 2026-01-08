@@ -4,9 +4,9 @@
     "type": "module",
     "scripts": {
         "build": "tsc",
-        "start": "node --loader ts-node/esm server.ts",
-        "dev": "nodemon --exec ts-node server.ts",
-        "seed": "ts-node seed.ts"
+        "start": "tsx server.ts",
+        "dev": "tsx watch server.ts",
+        "seed": "tsx seed.ts"
     },
     "dependencies": {
         "bcryptjs": "^3.0.3",
@@ -16,6 +16,7 @@
         "jsonwebtoken": "^9.0.3",
         "mongoose": "^9.0.1",
         "ts-node": "^10.9.1",
+        "tsx": "^4.21.0",
         "typescript": "^5.8.2"
     },
     "devDependencies": {
