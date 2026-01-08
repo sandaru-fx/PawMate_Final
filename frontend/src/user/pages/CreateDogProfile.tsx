@@ -13,6 +13,7 @@ const CreateDogProfile: React.FC = () => {
     const navigate = useNavigate();
     const { token } = useAuth();
     const [step, setStep] = useState(1);
+    const [errors, setErrors] = useState<Record<string, string>>({});
     
     const [formData, setFormData] = useState({
         name: '',
@@ -33,44 +34,69 @@ const CreateDogProfile: React.FC = () => {
 
     const updateField = (field: string, value: any) => {
         setFormData(prev => ({ ...prev, [field]: value }));
-    };
-
-    const handleSubmit = async () => {
-        // Calculate age from DOB
-        const age = formData.dob ? new Date().getFullYear() - new Date(formData.dob).getFullYear() : 0;
-        
-        const payload = {
-            ...formData,
-            age: age > 0 ? age : 1,
-            weight: 25, // Default weight
-            description: `Hi, I'm ${formData.name}!`,
-            status: 'approved' // Auto-approve for demo
-        };
-
-        try {
-            // Mock submission if no backend is running, or actual fetch if it is
-            console.log("Submitting:", payload);
-            
-            // In a real app, un-comment this:
-            /*
-            await fetch('http://localhost:5000/api/dogs', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(payload)
+        // Clear error when user types
+        if (errors[field]) {
+            setErrors(prev => {
+                const newErrors = { ...prev };
+                delete newErrors[field];
+                return newErrors;
             });
-            */
-            
-            navigate('/');
-        } catch (error) {
-            console.error("Failed to create profile", error);
         }
     };
 
-    const nextStep = () => setStep(prev => Math.min(prev + 1, 3));
+    const validateStep1 = () => {
+        const newErrors: Record<string, string> = {};
+        if (!formData.name.trim()) newErrors.name = 'Name is required';
+        if (!formData.breed) newErrors.breed = 'Breed is required';
+        if (!formData.dob) newErrors.dob = 'Date of Birth is required';
+        if (!formData.gender) newErrors.gender = 'Gender is required';
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    const validateStep3 = () => {
+        const newErrors: Record<string, string> = {};
+        
+        // Simple logic check: Next vaccination should be after last rabies shot if both exist
+        if (formData.lastRabiesShot && formData.nextVaccinationDue) {
+            const lastShot = new Date(formData.lastRabiesShot);
+            const nextDue = new Date(formData.nextVaccinationDue);
+            if (nextDue <= lastShot) {
+                newErrors.vaccinationDates = "Next vaccination must be after the last shot";
+            }
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    const nextStep = () => {
+        if (step === 1) {
+            if (!validateStep1()) return;
+        }
+        if (step === 2) {
+            if (formData.images.length === 0) {
+                alert("Please add at least one photo of your dog.");
+                return;
+            }
+        }
+        setStep(prev => Math.min(prev + 1, 3));
+    };
     const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
+
+    const handleSubmit = (e: React.MouseEvent) => {
+        e.preventDefault();
+        if (!validateStep3()) return;
+
+        // In a real app, send data to backend here
+        console.log("Submitting Dog Profile:", formData);
+        
+        // Simulate success and redirect
+        setTimeout(() => {
+            navigate('/home');
+        }, 500);
+    };
 
     // --- STEP 1: Basic Details ---
     const renderStep1 = () => (
@@ -106,12 +132,12 @@ const CreateDogProfile: React.FC = () => {
                                     <span className="material-symbols-outlined text-[20px]">pets</span>
                                 </div>
                                 <input 
-                                    required
                                     value={formData.name}
                                     onChange={(e) => updateField('name', e.target.value)}
-                                    className="w-full pl-10 pr-4 py-3 bg-input-bg dark:bg-[#362b23] border border-border dark:border-[#4a3b30] rounded-xl text-text-main dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none" placeholder="e.g. Charlie" type="text" 
+                                    className={`w-full pl-10 pr-4 py-3 bg-input-bg dark:bg-[#362b23] border ${errors.name ? 'border-red-500' : 'border-border dark:border-[#4a3b30]'} rounded-xl text-text-main dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none`} placeholder="e.g. Charlie" type="text" 
                                 />
                             </div>
+                            {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
                         </div>
 
                         <div className="space-y-2">
@@ -123,7 +149,7 @@ const CreateDogProfile: React.FC = () => {
                                 <select 
                                     value={formData.breed}
                                     onChange={(e) => updateField('breed', e.target.value)}
-                                    className="w-full pl-10 pr-10 py-3 bg-input-bg dark:bg-[#362b23] border border-border dark:border-[#4a3b30] rounded-xl text-text-main dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none appearance-none cursor-pointer"
+                                    className={`w-full pl-10 pr-10 py-3 bg-input-bg dark:bg-[#362b23] border ${errors.breed ? 'border-red-500' : 'border-border dark:border-[#4a3b30]'} rounded-xl text-text-main dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none appearance-none cursor-pointer`}
                                 >
                                     <option disabled value="">Select a breed...</option>
                                     <option value="Golden Retriever">Golden Retriever</option>
@@ -136,6 +162,7 @@ const CreateDogProfile: React.FC = () => {
                                     <span className="material-symbols-outlined text-[20px]">expand_more</span>
                                 </div>
                             </div>
+                            {errors.breed && <p className="text-xs text-red-500 mt-1">{errors.breed}</p>}
                         </div>
 
                         <div className="space-y-2">
@@ -147,9 +174,10 @@ const CreateDogProfile: React.FC = () => {
                                 <input 
                                     value={formData.dob}
                                     onChange={(e) => updateField('dob', e.target.value)}
-                                    className="w-full pl-10 pr-4 py-3 bg-input-bg dark:bg-[#362b23] border border-border dark:border-[#4a3b30] rounded-xl text-text-main dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none appearance-none" type="date" 
+                                    className={`w-full pl-10 pr-4 py-3 bg-input-bg dark:bg-[#362b23] border ${errors.dob ? 'border-red-500' : 'border-border dark:border-[#4a3b30]'} rounded-xl text-text-main dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none appearance-none`} type="date" 
                                 />
                             </div>
+                            {errors.dob && <p className="text-xs text-red-500 mt-1">{errors.dob}</p>}
                             <p className="text-xs text-text-muted ml-1">We use this to calculate their age automatically.</p>
                         </div>
 
@@ -162,7 +190,7 @@ const CreateDogProfile: React.FC = () => {
                                         checked={formData.gender === 'Male'}
                                         onChange={() => updateField('gender', 'Male')}
                                     />
-                                    <div className="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-border dark:border-[#4a3b30] bg-input-bg dark:bg-[#362b23] text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 peer-checked:border-primary peer-checked:bg-primary/5 peer-checked:text-primary transition-all duration-200">
+                                    <div className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 ${errors.gender && !formData.gender ? 'border-red-500' : 'border-border dark:border-[#4a3b30]'} bg-input-bg dark:bg-[#362b23] text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 peer-checked:border-primary peer-checked:bg-primary/5 peer-checked:text-primary transition-all duration-200`}>
                                         <span className="material-symbols-outlined text-3xl mb-1">male</span>
                                         <span className="font-semibold text-sm">Male</span>
                                     </div>
@@ -173,16 +201,17 @@ const CreateDogProfile: React.FC = () => {
                                         checked={formData.gender === 'Female'}
                                         onChange={() => updateField('gender', 'Female')}
                                     />
-                                    <div className="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-border dark:border-[#4a3b30] bg-input-bg dark:bg-[#362b23] text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 peer-checked:border-primary peer-checked:bg-primary/5 peer-checked:text-primary transition-all duration-200">
+                                    <div className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 ${errors.gender && !formData.gender ? 'border-red-500' : 'border-border dark:border-[#4a3b30]'} bg-input-bg dark:bg-[#362b23] text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 peer-checked:border-primary peer-checked:bg-primary/5 peer-checked:text-primary transition-all duration-200`}>
                                         <span className="material-symbols-outlined text-3xl mb-1">female</span>
                                         <span className="font-semibold text-sm">Female</span>
                                     </div>
                                 </label>
                             </div>
+                            {errors.gender && <p className="text-xs text-red-500 mt-1">{errors.gender}</p>}
                         </div>
 
                         <div className="flex items-center justify-between pt-6 mt-4 border-t border-border dark:border-[#4a3b30]">
-                            <button type="button" onClick={() => navigate('/')} className="text-sm font-semibold text-gray-500 hover:text-gray-800 px-4 py-2 rounded-lg transition-colors">
+                            <button type="button" onClick={() => navigate('/home')} className="text-sm font-semibold text-gray-500 hover:text-gray-800 px-4 py-2 rounded-lg transition-colors">
                                 Cancel
                             </button>
                             <button type="submit" className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-white text-sm font-bold py-3 px-8 rounded-full shadow-lg shadow-primary/30 transform transition hover:-translate-y-0.5 active:translate-y-0">
@@ -408,40 +437,42 @@ const CreateDogProfile: React.FC = () => {
                             {/* File Upload */}
                             <div className="border-2 border-dashed border-border dark:border-[#3a2e22] rounded-xl p-8 flex flex-col items-center justify-center text-center bg-background-light/50 dark:bg-background-dark/50 hover:bg-background-light dark:hover:bg-background-dark transition-colors cursor-pointer group">
                                 <div className="size-12 rounded-full bg-primary/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                                    <span className="material-symbols-outlined text-primary text-2xl">upload_file</span>
+                                    <span className="material-symbols-outlined text-3xl text-primary">upload_file</span>
                                 </div>
-                                <p className="text-text-main dark:text-white font-medium text-sm mb-1">Upload Vaccination Certificate</p>
-                                <p className="text-text-muted text-xs">Drag & drop or click to browse (PDF, JPG, PNG)</p>
+                                <p className="text-text-main dark:text-white font-bold text-sm mb-1">Upload Records</p>
+                                <p className="text-text-muted text-xs">PDF, JPG or PNG (Max 5MB)</p>
                             </div>
+                            
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="flex flex-col gap-1.5">
                                     <label className="text-text-main dark:text-white text-sm font-medium">Last Rabies Shot</label>
-                                    <div className="relative">
-                                        <input 
-                                            value={formData.lastRabiesShot}
-                                            onChange={(e) => updateField('lastRabiesShot', e.target.value)}
-                                            className="w-full bg-background-light dark:bg-background-dark border border-border dark:border-[#3a2e22] rounded-lg px-3 py-2.5 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow text-sm" type="date" 
-                                        />
-                                    </div>
+                                    <input 
+                                        type="date" 
+                                        value={formData.lastRabiesShot}
+                                        onChange={(e) => updateField('lastRabiesShot', e.target.value)}
+                                        className="w-full bg-background-light dark:bg-background-dark border border-border dark:border-[#3a2e22] rounded-lg px-3 py-2.5 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow text-sm" 
+                                    />
                                 </div>
                                 <div className="flex flex-col gap-1.5">
-                                    <label className="text-text-main dark:text-white text-sm font-medium">Next Vaccination Due</label>
-                                    <div className="relative">
-                                        <input 
-                                            value={formData.nextVaccinationDue}
-                                            onChange={(e) => updateField('nextVaccinationDue', e.target.value)}
-                                            className="w-full bg-background-light dark:bg-background-dark border border-border dark:border-[#3a2e22] rounded-lg px-3 py-2.5 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow text-sm" type="date" 
-                                        />
-                                    </div>
+                                    <label className="text-text-main dark:text-white text-sm font-medium">Next Due Date</label>
+                                    <input 
+                                        type="date" 
+                                        value={formData.nextVaccinationDue}
+                                        onChange={(e) => updateField('nextVaccinationDue', e.target.value)}
+                                        className="w-full bg-background-light dark:bg-background-dark border border-border dark:border-[#3a2e22] rounded-lg px-3 py-2.5 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow text-sm" 
+                                    />
                                 </div>
                             </div>
+                            {errors.vaccinationDates && (
+                                <p className="text-xs text-red-500 mt-1">{errors.vaccinationDates}</p>
+                            )}
                         </div>
                     </div>
                     <hr className="border-border dark:border-[#3a2e22]" />
                     {/* Section: Medical History */}
                     <div>
-                        <h3 className="text-text-main dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] mb-4 flex items-center gap-2">
-                            <span className="material-symbols-outlined text-primary">medical_services</span> Medical History
+                         <h3 className="text-text-main dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] mb-4 flex items-center gap-2">
+                            <span className="material-symbols-outlined text-primary">medical_information</span> Medical History
                         </h3>
                         <div className="flex flex-col gap-4">
                             <div className="flex flex-col gap-1.5">

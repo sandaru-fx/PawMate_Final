@@ -26,8 +26,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     // In a real app, validate token with backend here
-    const token = localStorage.getItem('token');
-    const userStr = localStorage.getItem('user');
+    const token = localStorage.getItem('pawmate_token');
+    const userStr = localStorage.getItem('pawmate_user');
     
     if (token && userStr) {
       setState({
@@ -35,26 +35,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user: JSON.parse(userStr),
         isAuthenticated: true
       });
-    } else {
-        // Auto-login for demo purposes so user sees the "Home" screen immediately
-        // Remove this else block for production
-        setState({
-            token: 'mock-jwt-token',
-            user: MOCK_USER,
-            isAuthenticated: true
-        });
     }
   }, []);
 
   const login = (token: string, user: User) => {
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(user));
+    localStorage.setItem('pawmate_token', token);
+    localStorage.setItem('pawmate_user', JSON.stringify(user));
     setState({ token, user, isAuthenticated: true });
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    localStorage.removeItem('pawmate_token');
+    localStorage.removeItem('pawmate_user');
     setState({ token: null, user: null, isAuthenticated: false });
   };
 

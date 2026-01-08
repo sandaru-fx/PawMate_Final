@@ -10,19 +10,29 @@
         "preview": "vite preview"
     },
     "dependencies": {
+        "@react-three/drei": "^9.122.0",
+        "@react-three/fiber": "^8.18.0",
+        "@studio-freight/lenis": "^1.0.42",
+        "@theatre/core": "^0.7.2",
+        "@theatre/studio": "^0.7.2",
         "axios": "^1.7.9",
         "clsx": "^2.1.1",
-        "framer-motion": "^11.14.0",
+        "framer-motion": "^11.18.2",
+        "gsap": "^3.14.2",
         "lucide-react": "^0.468.0",
+        "maath": "^0.10.8",
         "react": "^18.3.1",
         "react-dom": "^18.3.1",
         "react-router-dom": "^6.28.0",
         "recharts": "^3.6.0",
-        "tailwind-merge": "^2.5.5"
+        "split-type": "^0.3.4",
+        "tailwind-merge": "^2.5.5",
+        "three": "^0.182.0"
     },
     "devDependencies": {
         "@types/react": "^18.3.12",
         "@types/react-dom": "^18.3.1",
+        "@types/three": "^0.182.0",
         "@vitejs/plugin-react": "^4.3.4",
         "autoprefixer": "^10.4.20",
         "eslint": "^9.15.0",
